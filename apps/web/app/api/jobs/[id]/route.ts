@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@career-assistant/db";
+import { prisma, type JobStatus } from "@career-assistant/db";
 import { JOB_STATUSES } from "@/components/jobs/status-labels";
 
 const patchSchema = z.object({
@@ -32,9 +32,12 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }
 
+  // zod's z.enum(JOB_STATUSES as [string, ...string[]]) widens status to
+  // plain string -- safe to narrow back since the schema already validated
+  // it's one of JOB_STATUSES (a JobStatus[]).
   const job = await prisma.jobDescription.update({
     where: { id: params.id },
-    data: parsed.data,
+    data: parsed.data as { status?: JobStatus; notes?: string },
   });
 
   return NextResponse.json({ job });
