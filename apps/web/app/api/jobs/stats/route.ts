@@ -13,11 +13,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing user id" }, { status: 401 });
   }
 
-  const grouped = (await prisma.jobDescription.groupBy({
-    by: ["status"],
+  // `as const` on `by` is required -- Prisma's groupBy overloads resolve
+  // on the literal tuple type of `by`, and without it TS widens to
+  // string[], which breaks overload resolution (and made the outer `as`
+  // cast necessary in the first place).
+  const grouped = await prisma.jobDescription.groupBy({
+    by: ["status"] as const,
     where: { userId },
     _count: { _all: true },
-  })) as { status: JobStatus; _count: { _all: number } }[];
+  });
 
   const counts = Object.fromEntries(JOB_STATUSES.map((status) => [status, 0])) as Record<
     JobStatus,
