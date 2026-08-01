@@ -1,10 +1,15 @@
 "use client";
 
-import { ExternalLink, MapPin, DollarSign, Sparkles } from "lucide-react";
+import { ExternalLink, MapPin, DollarSign, Sparkles, GripVertical } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { JOB_STATUSES, JOB_STATUS_LABELS, JOB_STATUS_BADGE_VARIANT } from "./status-labels";
+import {
+  JOB_STATUSES,
+  JOB_STATUS_LABELS,
+  JOB_STATUS_BADGE_VARIANT,
+  JOB_STATUS_BORDER,
+} from "./status-labels";
 import type { JobCardData } from "./job-types";
 import type { JobStatus } from "@career-assistant/db";
 
@@ -19,14 +24,35 @@ interface JobCardProps {
   job: JobCardData;
   onStatusChange: (jobId: string, status: JobStatus) => void;
   onInterested: (job: JobCardData) => void;
+  /** Kanban context: adds a drag handle and native HTML5 drag-and-drop. */
+  draggable?: boolean;
+  onDragStart?: (job: JobCardData) => void;
+  onDragEnd?: () => void;
 }
 
-export function JobCard({ job, onStatusChange, onInterested }: JobCardProps) {
+export function JobCard({
+  job,
+  onStatusChange,
+  onInterested,
+  draggable = false,
+  onDragStart,
+  onDragEnd,
+}: JobCardProps) {
   return (
-    <Card className="flex flex-col gap-2">
+    <Card
+      draggable={draggable}
+      onDragStart={draggable ? () => onDragStart?.(job) : undefined}
+      onDragEnd={draggable ? onDragEnd : undefined}
+      className={`flex flex-col gap-2 border-l-4 transition-shadow hover:shadow-md ${JOB_STATUS_BORDER[job.status]} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
+    >
       <CardHeader className="gap-1 pb-2">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-sm leading-snug">{job.roleTitle ?? "Untitled role"}</CardTitle>
+          <CardTitle className="flex items-start gap-1.5 text-sm leading-snug">
+            {draggable && (
+              <GripVertical className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/50" aria-hidden="true" />
+            )}
+            {job.roleTitle ?? "Untitled role"}
+          </CardTitle>
           <Badge variant="outline" className="shrink-0 text-[10px]">
             {SOURCE_LABELS[job.source] ?? job.source}
           </Badge>

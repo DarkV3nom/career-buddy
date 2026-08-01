@@ -1,4 +1,6 @@
 import type { JobStatus } from "@career-assistant/db";
+import { Briefcase, Send, Clock3, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
+import type { ComponentType } from "react";
 
 // Matches the user's own wording for the pipeline stages exactly, so the
 // UI reads the same way they described it: "available to apply, to be
@@ -32,4 +34,39 @@ export const JOB_STATUS_BADGE_VARIANT: Record<
   IN_PROGRESS: "default",
   REJECTED: "destructive",
   NO_ANSWER: "outline",
+};
+
+// One calm icon per stage -- shared between the dashboard's stat cards and
+// the kanban board's column headers, so the same stage always reads the
+// same way everywhere in the app.
+export const JOB_STATUS_ICON: Record<JobStatus, ComponentType<{ className?: string }>> = {
+  AVAILABLE_TO_APPLY: Briefcase,
+  TO_BE_APPLIED: Clock3,
+  APPLIED: Send,
+  IN_PROGRESS: HelpCircle,
+  REJECTED: XCircle,
+  NO_ANSWER: CheckCircle2,
+};
+
+// Per-stage "pipeline gradient" -- ui-ux-pro-max's Sales Intelligence
+// Dashboard reference calls for a stage-color gradient on kanban column
+// headers and a matching status border on each card, rather than flat
+// grey columns. Built from the app's own design tokens (globals.css)
+// instead of new colors, so it stays consistent with the rest of the UI.
+export const JOB_STATUS_HEADER_GRADIENT: Record<JobStatus, string> = {
+  AVAILABLE_TO_APPLY: "from-secondary/20 via-secondary/5 to-transparent",
+  TO_BE_APPLIED: "from-warning/20 via-warning/5 to-transparent",
+  APPLIED: "from-accent/20 via-accent/5 to-transparent",
+  IN_PROGRESS: "from-primary/20 via-primary/5 to-transparent",
+  REJECTED: "from-destructive/15 via-destructive/5 to-transparent",
+  NO_ANSWER: "from-muted-foreground/15 via-muted-foreground/5 to-transparent",
+};
+
+export const JOB_STATUS_BORDER: Record<JobStatus, string> = {
+  AVAILABLE_TO_APPLY: "border-l-secondary",
+  TO_BE_APPLIED: "border-l-warning",
+  APPLIED: "border-l-accent",
+  IN_PROGRESS: "border-l-primary",
+  REJECTED: "border-l-destructive",
+  NO_ANSWER: "border-l-muted-foreground",
 };
