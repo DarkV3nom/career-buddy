@@ -30,6 +30,7 @@ model User {
   resumes            Resume[]
   jobDescriptions    JobDescription[]
   coverLetters       CoverLetter[]
+  outreachMessages   OutreachMessage[]
   starStories        StarStory[]
   interviewPrepPacks InterviewPrepPack[]
   conversations      Conversation[]
@@ -96,24 +97,64 @@ model ResumeVersion {
 // Job descriptions & matching
 // ---------------------------------------------------------------------
 
+// Where a JobDescription row came from. MANUAL covers the original
+// "paste a JD" flow from Sections 1-6; the other three are populated by
+// the one-click-apply job search (lib/jobs/apify-client.ts).
+enum JobSource {
+  MANUAL
+  LINKEDIN
+  INDEED
+  HIRINGCAFE
+}
+
+// The 6 pipeline stages from the one-click-apply workflow. Every scraped
+// job starts at AVAILABLE_TO_APPLY; MANUAL (chat-pasted) job descriptions
+// also default there but the status board is mostly meaningless for them
+// since they don't go through the search/apply flow.
+enum JobStatus {
+  AVAILABLE_TO_APPLY
+  TO_BE_APPLIED
+  APPLIED
+  IN_PROGRESS
+  REJECTED
+  NO_ANSWER
+}
+
 model JobDescription {
-  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId             String   @map("user_id") @db.Uuid
-  companyName        String?  @map("company_name")
-  roleTitle          String?  @map("role_title")
-  rawText            String   @map("raw_text")
-  extractedKeywords  Json?    @map("extracted_keywords") // {required: [], preferred: [], tools: []}
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String    @map("user_id") @db.Uuid
+  companyName        String?   @map("company_name")
+  roleTitle          String?   @map("role_title")
+  rawText            String    @map("raw_text")
+  extractedKeywords  Json?     @map("extracted_keywords") // {required: [], preferred: [], tools: []}
   embedding          Unsupported("vector(1536)")?
-  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // --- one-click-apply job search fields ---
+  source          JobSource  @default(MANUAL)
+  externalId      String?    @map("external_id") // job ID from the source platform, for dedup alongside externalUrl
+  externalUrl     String?    @unique @map("external_url")
+  location        String?
+  workplaceType   String?    @map("workplace_type") // remote | hybrid | onsite, when the source provides it
+  salaryText      String?    @map("salary_text") // raw string -- formats vary too much across sources to normalize reliably
+  experienceLevel String?    @map("experience_level") // best-effort tag; see lib/jobs/normalize.ts
+  postedAt        DateTime?  @map("posted_at") @db.Timestamptz(6)
+  scrapedAt       DateTime?  @map("scraped_at") @db.Timestamptz(6)
+  status          JobStatus  @default(AVAILABLE_TO_APPLY)
+  notes           String?
+  updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   resumeVersions     ResumeVersion[]
   matches            ResumeJdMatch[]
   coverLetters       CoverLetter[]
+  outreachMessages   OutreachMessage[]
   interviewPrepPacks InterviewPrepPack[]
   conversations      Conversation[]
 
   @@index([userId])
+  @@index([userId, status])
+  @@index([source])
   @@map("job_descriptions")
 }
 
@@ -152,6 +193,21 @@ model CoverLetter {
 
   @@index([userId])
   @@map("cover_letters")
+}
+
+model OutreachMessage {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  jobDescriptionId String   @map("job_description_id") @db.Uuid
+  messageType      String   @map("message_type") // 'recruiter_email' | 'linkedin_message' | 'referral_request' | 'follow_up' -- Section 6.9 categories
+  content          String
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobDescription JobDescription @relation(fields: [jobDescriptionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("outreach_messages")
 }
 
 model StarStory {
