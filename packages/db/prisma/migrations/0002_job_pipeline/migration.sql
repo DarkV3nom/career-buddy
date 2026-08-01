@@ -42,7 +42,15 @@ alter table job_descriptions
   alter column source set default 'MANUAL'::"JobSource",
   alter column status set default 'AVAILABLE_TO_APPLY'::"JobStatus";
 
-create unique index job_descriptions_external_url_key on job_descriptions(external_url) where external_url is not null;
+-- No `where external_url is not null` here (an earlier version had one):
+-- Prisma's upsert() compiles to INSERT ... ON CONFLICT (external_url),
+-- and Postgres can't target a partial index with that unless the query
+-- repeats the exact WHERE clause, which Prisma has no way to know about
+-- -- confirmed by actually running an upsert against it ("no unique or
+-- exclusion constraint matching the ON CONFLICT specification"). The
+-- partial index was redundant anyway: a plain unique index on a nullable
+-- column already allows unlimited NULLs in Postgres.
+create unique index job_descriptions_external_url_key on job_descriptions(external_url);
 create index job_descriptions_user_id_status_idx on job_descriptions(user_id, status);
 create index job_descriptions_source_idx on job_descriptions(source);
 
