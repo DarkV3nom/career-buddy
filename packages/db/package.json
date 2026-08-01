@@ -5,6 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "generate": "prisma generate",
+    "postinstall": "prisma generate",
     "migrate": "prisma migrate dev"
   },
   "dependencies": {
