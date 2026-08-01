@@ -24,9 +24,23 @@ alter table job_descriptions
 -- row has a valid default value (can't add an enum column with a default
 -- in one step across all Postgres versions cleanly, so this two-step
 -- avoids a migration that fails on a non-empty table).
+--
+-- Postgres also can't auto-cast a column's DEFAULT expression when
+-- changing its type, even with a USING clause on the column's values --
+-- confirmed by actually running this migration (the sandbox that
+-- originally wrote it couldn't, per the note above). Drop the varchar
+-- defaults first, convert the type, then re-add them typed as the enum.
+alter table job_descriptions
+  alter column source drop default,
+  alter column status drop default;
+
 alter table job_descriptions
   alter column source type "JobSource" using source::"JobSource",
   alter column status type "JobStatus" using status::"JobStatus";
+
+alter table job_descriptions
+  alter column source set default 'MANUAL'::"JobSource",
+  alter column status set default 'AVAILABLE_TO_APPLY'::"JobStatus";
 
 create unique index job_descriptions_external_url_key on job_descriptions(external_url) where external_url is not null;
 create index job_descriptions_user_id_status_idx on job_descriptions(user_id, status);
