@@ -1,6 +1,5 @@
 node_modules/
 .next/
-packages/db/generated/
 .env
 .env.local
 dist/
