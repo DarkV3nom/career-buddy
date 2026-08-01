@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { JOB_STATUSES, JOB_STATUS_LABELS, JOB_STATUS_BADGE_VARIANT } from "./status-labels";
 import type { JobCardData } from "./job-types";
-import type { JobStatus } from "@prisma/client";
+import type { JobStatus } from "@career-assistant/db";
 
 const SOURCE_LABELS: Record<string, string> = {
   LINKEDIN: "LinkedIn",

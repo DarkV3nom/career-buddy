@@ -1,4 +1,4 @@
-import type { JobStatus } from "@prisma/client";
+import type { JobStatus } from "@career-assistant/db";
 
 // Matches the user's own wording for the pipeline stages exactly, so the
 // UI reads the same way they described it: "available to apply, to be

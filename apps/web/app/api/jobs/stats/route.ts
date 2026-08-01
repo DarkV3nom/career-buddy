@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@career-assistant/db";
 import { JOB_STATUSES } from "@/components/jobs/status-labels";
-import type { JobStatus } from "@prisma/client";
+import { prisma, type JobStatus } from "@career-assistant/db";
 
 // GET /api/jobs/stats -- counts per pipeline status for the dashboard.
 // Always returns all six statuses (zero-filled), so the board never has a

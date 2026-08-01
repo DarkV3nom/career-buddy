@@ -9,7 +9,7 @@ import { StatusBoard } from "@/components/jobs/status-board";
 import { InterestedModal } from "@/components/jobs/interested-modal";
 import type { JobCardData } from "@/components/jobs/job-types";
 import type { JobSearchFilters, JobSourcePlatform } from "@/lib/jobs/types";
-import type { JobStatus } from "@prisma/client";
+import type { JobStatus } from "@career-assistant/db";
 
 // TODO: replace with the real authenticated user ID once Supabase Auth is
 // wired up -- see the matching TODO in app/api/jobs/search/route.ts. Kept

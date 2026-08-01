@@ -1,4 +1,4 @@
-import type { JobSource, JobStatus } from "@prisma/client";
+import type { JobSource, JobStatus } from "@career-assistant/db";
 
 // Shape of a job_descriptions row as it comes back over the API (dates
 // arrive as ISO strings via JSON, not Date objects).

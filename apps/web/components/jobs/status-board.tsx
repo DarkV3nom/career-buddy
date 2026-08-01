@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { JOB_STATUSES, JOB_STATUS_LABELS, JOB_STATUS_BADGE_VARIANT } from "./status-labels";
 import { JobCard } from "./job-card";
 import type { JobCardData } from "./job-types";
-import type { JobStatus } from "@prisma/client";
+import type { JobStatus } from "@career-assistant/db";
 
 interface StatusBoardProps {
   jobs: JobCardData[];

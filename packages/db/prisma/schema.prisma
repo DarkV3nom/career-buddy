@@ -5,9 +5,18 @@
 // migration (Prisma Migrate can version the column but not ivfflat/hnsw
 // index syntax).
 
+// Custom `output` instead of the default ambient `node_modules/@prisma/client`.
+// This is Prisma's own documented workaround for a known npm-workspaces bug
+// (prisma/prisma#7234, #25947): the CLI resolves @prisma/client relative to
+// schema.prisma's own location, not via normal Node module resolution, so
+// npm's hoisting of @prisma/client to the workspace root breaks generation
+// no matter where the client physically ends up. Generating to an explicit
+// local path sidesteps ambient resolution entirely -- see packages/db/index.ts
+// for the corresponding import change.
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
+  output          = "../generated/client"
 }
 
 datasource db {

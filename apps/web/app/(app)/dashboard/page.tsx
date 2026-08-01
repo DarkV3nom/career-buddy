@@ -6,7 +6,7 @@ import { RefreshCw, Briefcase, Send, Clock3, CheckCircle2, XCircle, HelpCircle, 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { JOB_STATUSES, JOB_STATUS_LABELS } from "@/components/jobs/status-labels";
-import type { JobStatus } from "@prisma/client";
+import type { JobStatus } from "@career-assistant/db";
 
 // TODO: replace with the real authenticated user ID once Supabase Auth is
 // wired up -- matches DEV_USER_ID in app/(app)/jobs/page.tsx.

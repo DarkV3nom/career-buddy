@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@career-assistant/db";
 import { JOB_STATUSES } from "@/components/jobs/status-labels";
-import type { JobStatus } from "@prisma/client";
+import { prisma, type JobStatus } from "@career-assistant/db";
 
 // GET /api/jobs?status=APPLIED -- list jobs for the board/dashboard.
 // Omit ?status to get everything, grouped client-side. Always scoped to
