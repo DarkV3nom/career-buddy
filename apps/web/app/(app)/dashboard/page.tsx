@@ -243,7 +243,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-semibold">Jobs by Source</CardTitle>
-            <p className="text-xs text-muted-foreground">Where everything you're tracking came from</p>
+            <p className="text-xs text-muted-foreground">Where everything you&apos;re tracking came from</p>
           </CardHeader>
           <CardContent>
             <SourceDonutChart data={sourceBreakdown} total={total} />
