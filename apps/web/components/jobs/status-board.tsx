@@ -47,7 +47,13 @@ export function StatusBoard({ jobs, onStatusChange, onInterested }: StatusBoardP
   }
 
   return (
-    <div className="grid grid-flow-col auto-cols-[280px] gap-3 overflow-x-auto pb-2">
+    // Columns are full-width-minus-a-peek on phones (auto-cols-[85vw], capped
+    // at 320px so it doesn't balloon on small tablets), narrowing to a fixed
+    // 280px from sm up where six of them can reasonably share the viewport.
+    // snap-x turns the horizontal scroll into one-column-at-a-time paging on
+    // touch instead of the old free-scroll, which made it easy to land
+    // between two columns on mobile.
+    <div className="grid grid-flow-col auto-cols-[min(85vw,320px)] gap-3 overflow-x-auto pb-2 snap-x snap-mandatory sm:auto-cols-[240px] sm:snap-none lg:auto-cols-[280px]">
       {grouped.map(({ status, jobs: columnJobs }) => {
         const Icon = JOB_STATUS_ICON[status];
         const isDropTarget = dragOverStatus === status;
@@ -63,7 +69,7 @@ export function StatusBoard({ jobs, onStatusChange, onInterested }: StatusBoardP
               e.preventDefault();
               handleDrop(status);
             }}
-            className={`flex flex-col gap-2 rounded-lg border bg-gradient-to-b p-2 transition-colors ${JOB_STATUS_HEADER_GRADIENT[status]} ${
+            className={`flex snap-start flex-col gap-2 rounded-lg border bg-gradient-to-b p-2 transition-colors ${JOB_STATUS_HEADER_GRADIENT[status]} ${
               isDropTarget ? "border-primary ring-2 ring-primary/30" : "border-border"
             }`}
           >
@@ -74,7 +80,12 @@ export function StatusBoard({ jobs, onStatusChange, onInterested }: StatusBoardP
               </h3>
               <Badge variant={JOB_STATUS_BADGE_VARIANT[status]}>{columnJobs.length}</Badge>
             </div>
-            <ScrollArea className="h-[calc(100vh-20rem)]">
+            {/* Fixed viewport-relative height, but capped with a min so it
+                doesn't collapse to near-nothing on short mobile viewports
+                once the header/stat-cards/search bar above eat into
+                100vh -- 20rem was tuned for desktop and left almost no
+                room on a phone in landscape or with the URL bar visible. */}
+            <ScrollArea className="h-[max(50vh,20rem)] sm:h-[calc(100vh-20rem)]">
               <div className="flex flex-col gap-2 pr-2">
                 {columnJobs.length === 0 && (
                   <p className="px-1 py-6 text-center text-xs text-muted-foreground">

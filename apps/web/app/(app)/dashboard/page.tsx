@@ -138,7 +138,11 @@ export default function DashboardPage() {
         </p>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      {/* 2 cols on phones, 3 on small tablets, 6 in one row from lg up --
+          the old sm:2/lg:3/xl:6 jumps left a wide dead zone between 640px
+          and 1280px where cards were needlessly large and the row wrapped
+          awkwardly (e.g. a lone 6th card on its own line at md/lg). */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
         {JOB_STATUSES.map((status) => {
           const Icon = JOB_STATUS_ICON[status];
           const count = counts[status] ?? 0;
@@ -148,15 +152,15 @@ export default function DashboardPage() {
               className={`flex flex-col justify-between overflow-hidden border bg-gradient-to-br ${JOB_STATUS_HEADER_GRADIENT[status]}`}
             >
               <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
                   {JOB_STATUS_LABELS[status]}
                 </CardTitle>
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-card shadow-sm">
-                  <Icon className="h-3.5 w-3.5 text-foreground" aria-hidden="true" />
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-card shadow-sm sm:h-7 sm:w-7">
+                  <Icon className="h-3 w-3 text-foreground sm:h-3.5 sm:w-3.5" aria-hidden="true" />
                 </span>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-semibold tabular-nums text-foreground" aria-live="polite">
+                <p className="text-2xl font-semibold tabular-nums text-foreground sm:text-3xl" aria-live="polite">
                   {isLoading && !stats ? "—" : count}
                 </p>
               </CardContent>
