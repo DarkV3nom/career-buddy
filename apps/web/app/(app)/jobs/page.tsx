@@ -25,8 +25,10 @@ async function parseJsonSafely(res: Response): Promise<{ data: unknown; ok: bool
 
 // TODO: replace with the real authenticated user ID once Supabase Auth is
 // wired up -- see the matching TODO in app/api/jobs/search/route.ts. Kept
-// as a single constant so it's a one-line swap.
-const DEV_USER_ID = "dev-user";
+// as a single constant so it's a one-line swap. Must be a real row in
+// `users` (job_descriptions.user_id is a uuid FK) -- seeded via migration
+// 0003_seed_dev_user.
+const DEV_USER_ID = "11111111-1111-1111-1111-111111111111";
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<JobCardData[]>([]);

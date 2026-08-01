@@ -17,8 +17,10 @@ import type { JobCardData } from "@/components/jobs/job-types";
 import type { JobStatus } from "@career-assistant/db";
 
 // TODO: replace with the real authenticated user ID once Supabase Auth is
-// wired up -- matches DEV_USER_ID in app/(app)/jobs/page.tsx.
-const DEV_USER_ID = "dev-user";
+// wired up -- matches DEV_USER_ID in app/(app)/jobs/page.tsx. Must be a
+// real row in `users` (job_descriptions.user_id is a uuid FK) -- seeded
+// via migration 0003_seed_dev_user.
+const DEV_USER_ID = "11111111-1111-1111-1111-111111111111";
 
 type StatsResponse = {
   counts: Record<JobStatus, number>;
