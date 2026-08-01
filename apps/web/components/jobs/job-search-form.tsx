@@ -17,14 +17,21 @@ const PLATFORM_LABELS: Record<JobSourcePlatform, string> = {
   HIRINGCAFE: "Hiring.cafe",
 };
 
+// Labels show years of experience (what people actually think in) instead
+// of LinkedIn's internal level jargon. The underlying `value` is unchanged
+// -- LinkedIn's own filter is level-based (mapped to its f_E codes in
+// linkedin-url-builder.ts), and Indeed/HiringCafe only support this as a
+// best-effort text match against free-text seniority (normalize.ts), so
+// there's no actor that actually accepts a numeric years value. These
+// ranges are the commonly-cited approximation for each LinkedIn level.
 const EXPERIENCE_OPTIONS: { value: NonNullable<JobSearchFilters["experienceLevel"]> | ""; label: string }[] = [
   { value: "", label: "Any experience level" },
-  { value: "internship", label: "Internship" },
-  { value: "entry_level", label: "Entry level" },
-  { value: "associate", label: "Associate" },
-  { value: "mid_senior_level", label: "Mid-Senior level" },
-  { value: "director", label: "Director" },
-  { value: "executive", label: "Executive" },
+  { value: "internship", label: "Internship / student" },
+  { value: "entry_level", label: "0–2 years" },
+  { value: "associate", label: "2–4 years" },
+  { value: "mid_senior_level", label: "4–8 years" },
+  { value: "director", label: "8–12 years" },
+  { value: "executive", label: "12+ years" },
 ];
 
 const WORKPLACE_OPTIONS: { value: NonNullable<JobSearchFilters["workplaceType"]> | ""; label: string }[] = [

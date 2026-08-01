@@ -57,7 +57,7 @@ export function InterestedModal({ job, userId, onClose }: InterestedModalProps) 
     try {
       const res = await fetch(`/api/jobs/${job.id}/generate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-user-id": userId },
         body: JSON.stringify({ outputs: Array.from(outputs), messageType }),
       });
       const data = await res.json();

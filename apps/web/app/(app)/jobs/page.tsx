@@ -71,10 +71,19 @@ export default function JobsPage() {
         setSearchNote(message ?? "Search failed -- something went wrong on our end. Try again in a moment.");
         return;
       }
-      const counts = (data as { resultCounts: { platform: string; count: number }[] }).resultCounts
-        .map((r) => `${r.platform}: ${r.count}`)
-        .join(", ");
-      setSearchNote(`Found — ${counts}`);
+      const body = data as {
+        resultCounts: { platform: string; count: number }[];
+        errors?: { platform: string; error: string }[];
+      };
+      const counts = body.resultCounts.map((r) => `${r.platform}: ${r.count}`).join(", ");
+      // The backend already captures a per-platform error when one
+      // source's Apify actor throws (rate limit, bad location, etc.) --
+      // it just never made it into this message before, so a real error
+      // on one platform looked identical to "found nothing there."
+      const errorNote = body.errors?.length
+        ? " — " + body.errors.map((e) => `${e.platform} failed: ${e.error}`).join("; ")
+        : "";
+      setSearchNote(`Found — ${counts}${errorNote}`);
       await loadJobs();
     } finally {
       setIsSearching(false);
