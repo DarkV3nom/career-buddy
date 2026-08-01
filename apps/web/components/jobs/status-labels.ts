@@ -70,3 +70,44 @@ export const JOB_STATUS_BORDER: Record<JobStatus, string> = {
   REJECTED: "border-l-destructive",
   NO_ANSWER: "border-l-muted-foreground",
 };
+
+// Pastel icon-badge treatment for the dashboard's stat cards (reference:
+// Findex-style dashboard, soft tinted circle behind each metric's icon).
+export const JOB_STATUS_BADGE_BG: Record<JobStatus, string> = {
+  AVAILABLE_TO_APPLY: "bg-secondary/15 text-secondary",
+  TO_BE_APPLIED: "bg-warning/15 text-warning",
+  APPLIED: "bg-accent/15 text-accent",
+  IN_PROGRESS: "bg-primary/15 text-primary",
+  REJECTED: "bg-destructive/15 text-destructive",
+  NO_ANSWER: "bg-muted-foreground/15 text-muted-foreground",
+};
+
+// Same 6 colors, as hex, for the SVG charts (Applications bar chart, job
+// source donut) where Tailwind classes can't drive `fill`/`stroke`
+// directly. Kept as the literal values behind this file's CSS variables
+// (see globals.css) rather than trying to read the variables at runtime.
+export const JOB_STATUS_HEX: Record<JobStatus, string> = {
+  AVAILABLE_TO_APPLY: "#2563EB",
+  TO_BE_APPLIED: "#B45309",
+  APPLIED: "#16A34A",
+  IN_PROGRESS: "#1E3A5F",
+  REJECTED: "#DC2626",
+  NO_ANSWER: "#64748B",
+};
+
+// Source colors for the "where did this come from" donut -- distinct from
+// the status palette above so the two charts never look like they're
+// showing the same thing.
+export const JOB_SOURCE_HEX: Record<string, string> = {
+  LINKEDIN: "#2563EB",
+  INDEED: "#16A34A",
+  HIRINGCAFE: "#B45309",
+  MANUAL: "#64748B",
+};
+
+export const JOB_SOURCE_LABELS: Record<string, string> = {
+  LINKEDIN: "LinkedIn",
+  INDEED: "Indeed",
+  HIRINGCAFE: "Hiring.cafe",
+  MANUAL: "Manual",
+};

@@ -16,4 +16,11 @@ export interface JobCardData {
   scrapedAt: string | null;
   status: JobStatus;
   notes: string | null;
+  // The API route (`/api/jobs`) does an unfiltered `findMany`, so these
+  // come back on every row even though earlier code never typed them.
+  // `updatedAt` is Prisma's `@updatedAt` -- it bumps on every PATCH,
+  // including status changes, so it's the closest real signal we have to
+  // "when this got tagged" for the dashboard's activity feed/chart.
+  createdAt: string;
+  updatedAt: string;
 }

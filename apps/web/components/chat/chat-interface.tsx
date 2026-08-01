@@ -51,7 +51,7 @@ export function ChatInterface({
   }
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-full w-full">
       <ModeSelector
         selectedMode={selectedMode}
         onSelectMode={setSelectedMode}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { RefreshCw, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,17 @@ import {
   JOB_STATUSES,
   JOB_STATUS_LABELS,
   JOB_STATUS_ICON,
-  JOB_STATUS_HEADER_GRADIENT,
+  JOB_SOURCE_HEX,
+  JOB_SOURCE_LABELS,
 } from "@/components/jobs/status-labels";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { ApplicationsBarChart } from "@/components/dashboard/applications-bar-chart";
+import { SourceDonutChart } from "@/components/dashboard/source-donut-chart";
+import { JobsFeedTable } from "@/components/dashboard/jobs-feed-table";
 import { StatusBoard } from "@/components/jobs/status-board";
 import { InterestedModal } from "@/components/jobs/interested-modal";
 import type { JobCardData } from "@/components/jobs/job-types";
-import type { JobStatus } from "@career-assistant/db";
+import type { JobStatus, JobSource } from "@career-assistant/db";
 
 // TODO: replace with the real authenticated user ID once Supabase Auth is
 // wired up -- matches DEV_USER_ID in app/(app)/jobs/page.tsx. Must be a
@@ -33,12 +38,57 @@ function formatUpdatedAt(iso: string | null) {
   return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 
+// "Applied or further along" -- the closest real signal we have to a
+// submitted application, since the pipeline doesn't record a distinct
+// appliedAt timestamp. Used both for the weekly bar chart and its label.
+const APPLIED_OR_LATER: JobStatus[] = ["APPLIED", "IN_PROGRESS", "REJECTED", "NO_ANSWER"];
+
+function startOfWeek(d: Date) {
+  const copy = new Date(d);
+  const day = copy.getDay();
+  copy.setDate(copy.getDate() - day);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+// Buckets the last `weeks` calendar weeks (Sun-Sat), oldest first, so the
+// bar chart reads left-to-right like a timeline. Each job lands in the
+// bucket matching its updatedAt -- for applied+ jobs, that's the last time
+// its status changed, which is the best available proxy for "when this
+// became an application" without a dedicated appliedAt column.
+function buildWeeklyBuckets(jobs: JobCardData[], weeks: number) {
+  const now = new Date();
+  const bucketStarts: Date[] = [];
+  for (let i = weeks - 1; i >= 0; i--) {
+    const s = startOfWeek(now);
+    s.setDate(s.getDate() - i * 7);
+    bucketStarts.push(s);
+  }
+
+  const applied = jobs.filter((j) => APPLIED_OR_LATER.includes(j.status));
+
+  return bucketStarts.map((start, idx) => {
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    const count = applied.filter((j) => {
+      const ts = j.updatedAt ? new Date(j.updatedAt) : null;
+      return ts && ts >= start && ts < end;
+    }).length;
+    const label =
+      idx === bucketStarts.length - 1
+        ? "This week"
+        : start.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    return { label, count };
+  });
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [jobs, setJobs] = useState<JobCardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [interestedJob, setInterestedJob] = useState<JobCardData | null>(null);
+  const [feedFilter, setFeedFilter] = useState<JobStatus | null>(null);
 
   const loadAll = useCallback(async () => {
     setIsLoading(true);
@@ -107,8 +157,20 @@ export default function DashboardPage() {
   );
   const total = jobs.length;
 
+  const weeklyBuckets = useMemo(() => buildWeeklyBuckets(jobs, 4), [jobs]);
+
+  const sourceBreakdown = useMemo(() => {
+    const sources: JobSource[] = ["LINKEDIN", "INDEED", "HIRINGCAFE", "MANUAL"];
+    return sources.map((source) => ({
+      key: source,
+      label: JOB_SOURCE_LABELS[source],
+      count: jobs.filter((j) => j.source === source).length,
+      color: JOB_SOURCE_HEX[source],
+    }));
+  }, [jobs]);
+
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6 p-4 sm:p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Pipeline Dashboard</h1>
@@ -138,35 +200,55 @@ export default function DashboardPage() {
         </p>
       )}
 
-      {/* 2 cols on phones, 3 on small tablets, 6 in one row from lg up --
-          the old sm:2/lg:3/xl:6 jumps left a wide dead zone between 640px
-          and 1280px where cards were needlessly large and the row wrapped
-          awkwardly (e.g. a lone 6th card on its own line at md/lg). */}
+      {/* Stat cards: 2 cols on phones, 3 on small tablets, 6 in one row
+          from lg up. Hover a card for a quick preview of the jobs behind
+          it; click to filter the Jobs Feed table further down. */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
         {JOB_STATUSES.map((status) => {
-          const Icon = JOB_STATUS_ICON[status];
           const count = counts[status] ?? 0;
           return (
-            <Card
+            <StatCard
               key={status}
-              className={`flex flex-col justify-between overflow-hidden border bg-gradient-to-br ${JOB_STATUS_HEADER_GRADIENT[status]}`}
-            >
-              <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
-                  {JOB_STATUS_LABELS[status]}
-                </CardTitle>
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-card shadow-sm sm:h-7 sm:w-7">
-                  <Icon className="h-3 w-3 text-foreground sm:h-3.5 sm:w-3.5" aria-hidden="true" />
-                </span>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-semibold tabular-nums text-foreground sm:text-3xl" aria-live="polite">
-                  {isLoading && !stats ? "—" : count}
-                </p>
-              </CardContent>
-            </Card>
+              status={status}
+              label={JOB_STATUS_LABELS[status]}
+              icon={JOB_STATUS_ICON[status]}
+              count={count}
+              sharePct={total > 0 ? Math.round((count / total) * 100) : null}
+              jobs={jobs.filter((j) => j.status === status)}
+              isActive={feedFilter === status}
+              isLoading={isLoading && !stats}
+              onSelect={() => setFeedFilter((prev) => (prev === status ? null : status))}
+            />
           );
         })}
+      </div>
+
+      {/* Applications-over-time + source breakdown, side by side on
+          desktop, stacked on mobile -- same two-panel layout as the
+          reference dashboard's "Applications Statistics" / "Impressions"
+          row. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold">Applications by Week</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Jobs moved to Applied or further, last 4 weeks
+            </p>
+          </CardHeader>
+          <CardContent>
+            <ApplicationsBarChart data={weeklyBuckets} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold">Jobs by Source</CardTitle>
+            <p className="text-xs text-muted-foreground">Where everything you're tracking came from</p>
+          </CardHeader>
+          <CardContent>
+            <SourceDonutChart data={sourceBreakdown} total={total} />
+          </CardContent>
+        </Card>
       </div>
 
       {total === 0 && !isLoading ? (
@@ -178,11 +260,28 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-foreground">Pipeline board</h2>
-          <p className="-mt-1 text-xs text-muted-foreground">Drag a card between columns, or use the dropdown on each card.</p>
-          <StatusBoard jobs={jobs} onStatusChange={handleStatusChange} onInterested={handleInterested} />
-        </div>
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold">Jobs Feed</CardTitle>
+              <p className="text-xs text-muted-foreground">Most recently updated first</p>
+            </CardHeader>
+            <CardContent>
+              <JobsFeedTable
+                jobs={jobs}
+                filterStatus={feedFilter}
+                filterLabel={feedFilter ? JOB_STATUS_LABELS[feedFilter] : null}
+                onClearFilter={() => setFeedFilter(null)}
+              />
+            </CardContent>
+          </Card>
+
+          <div className="flex flex-col gap-2">
+            <h2 className="text-sm font-semibold text-foreground">Pipeline board</h2>
+            <p className="-mt-1 text-xs text-muted-foreground">Drag a card between columns, or use the dropdown on each card.</p>
+            <StatusBoard jobs={jobs} onStatusChange={handleStatusChange} onInterested={handleInterested} />
+          </div>
+        </>
       )}
 
       {interestedJob && (
