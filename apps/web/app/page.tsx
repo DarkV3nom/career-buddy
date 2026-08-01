@@ -1,108 +1,56 @@
 import Link from "next/link";
-import { MessagesSquare, FileText, ArrowRight, Briefcase, LayoutDashboard } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+import { Compass, ArrowRight } from "lucide-react";
 
-// Real landing page — replaces the Phase 0 scaffold placeholder. Links to
-// the screens that actually exist today; add more cards here as new
-// routes (interview prep, STAR builder, etc.) come online.
+// Welcome screen, styled after a "Get Started" onboarding card (icon
+// badge + pill + heading + two CTAs on a gradient-to-white panel) but
+// built entirely from this app's own design tokens (globals.css --
+// primary navy, secondary blue) rather than the reference's purple.
+// Replaces the old plain card-grid landing page; that grid's content now
+// lives on /about as the "Learn more" destination.
 export default function Home() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-4xl flex-col items-center justify-center gap-10 p-8">
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-3xl font-semibold text-primary">
-          Career Application Assistant
-        </h1>
-        <p className="max-w-md text-muted-foreground">
-          Resume optimization, cover letters, interview prep, and career
-          coaching — grounded in your real experience, never invented.
-        </p>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-6">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-secondary/20 blur-3xl" />
+        <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
       </div>
 
-      <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="flex flex-col">
-          <CardHeader>
-            <MessagesSquare className="h-6 w-6 text-primary" aria-hidden="true" />
-            <CardTitle>Chat</CardTitle>
-            <CardDescription>
-              Talk through any task — resume, cover letter, interview prep,
-              or one of 20 other career tasks. Auto-routes to the right
-              playbook, or pick a mode yourself.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="mt-auto">
-            <Button asChild className="w-full">
-              <Link href="/chat">
-                Open Chat
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="w-full max-w-md overflow-hidden rounded-3xl border border-border bg-card shadow-xl">
+        <div className="flex flex-col items-center gap-5 bg-gradient-to-b from-primary via-secondary/60 to-card px-8 pb-10 pt-10 text-center">
+          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-white shadow-inner">
+            <Compass className="h-8 w-8" aria-hidden="true" />
+          </span>
+          <span className="rounded-full bg-white/90 px-4 py-1.5 text-xs font-medium text-foreground shadow-sm">
+            Welcome to Career Buddy
+          </span>
+        </div>
 
-        <Card className="flex flex-col">
-          <CardHeader>
-            <FileText className="h-6 w-6 text-primary" aria-hidden="true" />
-            <CardTitle>Resume Editor</CardTitle>
-            <CardDescription>
-              Side-by-side original vs. ATS-optimized view with inline diff
-              highlighting, keyword traceability, and a live compliance
-              checklist.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="mt-auto">
-            <Button asChild variant="secondary" className="w-full">
-              <Link href="/resumes/demo">
-                Open Resume Editor
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center gap-3 px-8 pb-8 pt-2 text-center">
+          <h1 className="text-2xl font-semibold text-foreground">Get Started with Career Buddy</h1>
+          <p className="text-sm text-muted-foreground">
+            Your AI-powered career assistant — search jobs, tailor resumes, and track every
+            application in one place, or learn more about{" "}
+            <span className="font-semibold text-foreground">what Career Buddy can do</span>.
+          </p>
 
-        <Card className="flex flex-col">
-          <CardHeader>
-            <Briefcase className="h-6 w-6 text-primary" aria-hidden="true" />
-            <CardTitle>Job Search</CardTitle>
-            <CardDescription>
-              Search LinkedIn, Indeed, and Hiring.cafe in one place, then
-              track every application through a six-stage status board.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="mt-auto">
-            <Button asChild variant="secondary" className="w-full">
-              <Link href="/jobs">
-                Open Job Search
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="flex flex-col">
-          <CardHeader>
-            <LayoutDashboard className="h-6 w-6 text-primary" aria-hidden="true" />
-            <CardTitle>Dashboard</CardTitle>
-            <CardDescription>
-              A live count of every application by pipeline stage —
-              applied, in progress, rejected, and beyond.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="mt-auto">
-            <Button asChild variant="secondary" className="w-full">
-              <Link href="/dashboard">
-                Open Dashboard
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+          <div className="mt-3 flex w-full flex-col gap-3">
+            <Link
+              href="/about"
+              className="flex w-full items-center justify-center rounded-full border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+            >
+              Learn More About Career Buddy
+            </Link>
+            <Link
+              href="/dashboard"
+              className="flex w-full items-center gap-2 rounded-full bg-gradient-to-r from-primary to-secondary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-opacity hover:opacity-90"
+            >
+              <span className="flex-1 text-center">Take Me to Dashboard</span>
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-primary">
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </span>
+            </Link>
+          </div>
+        </div>
       </div>
     </main>
   );
