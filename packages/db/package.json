@@ -5,7 +5,6 @@
   "main": "index.ts",
   "scripts": {
     "generate": "PRISMA_GENERATE_SKIP_AUTOINSTALL=true prisma generate",
-    "postinstall": "PRISMA_GENERATE_SKIP_AUTOINSTALL=true prisma generate",
     "migrate": "prisma migrate dev"
   },
   "dependencies": {
