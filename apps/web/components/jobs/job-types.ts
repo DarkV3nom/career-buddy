@@ -23,4 +23,17 @@ export interface JobCardData {
   // "when this got tagged" for the dashboard's activity feed/chart.
   createdAt: string;
   updatedAt: string;
+  // Also always present on the API response (rawText is a required
+  // column) -- the full scraped/entered job description, used server-side
+  // for resume/cover-letter generation. Now also read here for the job
+  // card's short description snippet (truncated client-side, see
+  // job-card.tsx's stripAndTruncate).
+  rawText: string;
+  // Populated by the keyword-extraction step that runs during resume/
+  // cover-letter generation (see Interested workflow) -- null on a job
+  // that hasn't gone through that yet, which is most freshly-scraped
+  // jobs. Used as real skill tags when available; job-card.tsx falls
+  // back to source/status tags when it's null rather than inventing
+  // skills.
+  extractedKeywords: { required?: string[]; preferred?: string[]; tools?: string[] } | null;
 }

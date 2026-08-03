@@ -12,6 +12,7 @@ import {
   JOB_STATUS_BORDER,
   JOB_SOURCE_LABELS,
 } from "./status-labels";
+import { stripHtml, truncate, flattenKeywords } from "@/lib/jobs/text";
 import type { JobCardData } from "./job-types";
 import type { JobStatus } from "@career-assistant/db";
 
@@ -31,13 +32,21 @@ function formatDate(iso: string | null) {
 }
 
 /**
- * Job result card, restyled after the reference's colorful listing
- * cards: logo square, title/company, a badge row for level/workplace/
- * salary, then a tag row. The reference also shows a short description
- * snippet and skill tags -- we don't fetch/store either on JobCardData
- * (only the full JD text lives server-side, used for generation, not
- * exposed here), so rather than fabricate copy those rows use only
- * fields the API actually returns (source, workplace type, status).
+ * Job result card, matching the reference's listing layout: logo,
+ * title/company, a seniority/job-type/salary badge row, a short
+ * description snippet, a tag row, then date published + actions.
+ *
+ * Description snippet comes from `rawText` (the full scraped JD, always
+ * present -- see job-types.ts), HTML-stripped and truncated client-side,
+ * not a separate summary field (none exists). Tags come from
+ * `extractedKeywords` when the keyword-extraction step has run for this
+ * job (skills actually found in the JD); when it hasn't, the tag row
+ * falls back to source + status instead of inventing skills.
+ *
+ * "Job type" only ever shows workplace type (remote/hybrid/onsite) --
+ * the scrapers don't capture full-time/part-time employment type at all,
+ * so rather than guess "Full-Time" the way the reference does, that
+ * badge is simply omitted when workplaceType is null.
  */
 export function JobCard({
   job,
@@ -47,7 +56,9 @@ export function JobCard({
   onDragStart,
   onDragEnd,
 }: JobCardProps) {
-  const dateLabel = formatDate(job.scrapedAt ?? job.postedAt);
+  const dateLabel = formatDate(job.postedAt ?? job.scrapedAt);
+  const description = job.rawText ? truncate(stripHtml(job.rawText), 160) : null;
+  const skillTags = flattenKeywords(job.extractedKeywords);
 
   return (
     <Card
@@ -79,21 +90,38 @@ export function JobCard({
           </span>
         )}
 
-        {(job.experienceLevel || job.workplaceType || job.salaryText) && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-foreground">
-            {job.experienceLevel && <span>{job.experienceLevel}</span>}
-            {job.workplaceType && <span className="capitalize text-muted-foreground">{job.workplaceType}</span>}
-            {job.salaryText && <span className="text-accent">{job.salaryText}</span>}
-          </div>
+        {/* Seniority / job type / salary -- always 3 slots for visual
+            consistency, with an explicit "not disclosed" instead of just
+            hiding the salary slot when it's missing. */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium">
+          {job.experienceLevel && <span className="text-foreground">{job.experienceLevel}</span>}
+          {job.workplaceType && <span className="capitalize text-muted-foreground">{job.workplaceType}</span>}
+          <span className={job.salaryText ? "text-accent" : "italic text-muted-foreground"}>
+            {job.salaryText ?? "Salary not disclosed"}
+          </span>
+        </div>
+
+        {description && (
+          <p className="line-clamp-2 text-xs text-muted-foreground">{description}</p>
         )}
 
         <div className="flex flex-wrap gap-1.5">
-          <Badge variant="outline" className="text-[10px]">
-            {JOB_SOURCE_LABELS[job.source] ?? job.source}
-          </Badge>
-          <Badge variant={JOB_STATUS_BADGE_VARIANT[job.status]} className="text-[10px]">
-            {JOB_STATUS_LABELS[job.status]}
-          </Badge>
+          {skillTags.length > 0 ? (
+            skillTags.map((tag) => (
+              <Badge key={tag} variant="outline" className="text-[10px]">
+                {tag}
+              </Badge>
+            ))
+          ) : (
+            <>
+              <Badge variant="outline" className="text-[10px]">
+                {JOB_SOURCE_LABELS[job.source] ?? job.source}
+              </Badge>
+              <Badge variant={JOB_STATUS_BADGE_VARIANT[job.status]} className="text-[10px]">
+                {JOB_STATUS_LABELS[job.status]}
+              </Badge>
+            </>
+          )}
         </div>
 
         <div className="mt-auto flex flex-col gap-2 pt-1">
