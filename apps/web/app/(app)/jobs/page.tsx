@@ -5,7 +5,8 @@ import { RefreshCw, LayoutDashboard, SearchX } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { JobSearchForm } from "@/components/jobs/job-search-form";
+import { JobSearchTopbar } from "@/components/jobs/job-search-topbar";
+import { JobFiltersSidebar } from "@/components/jobs/job-filters-sidebar";
 import { JobCard } from "@/components/jobs/job-card";
 import { InterestedModal } from "@/components/jobs/interested-modal";
 import type { JobCardData } from "@/components/jobs/job-types";
@@ -30,12 +31,42 @@ async function parseJsonSafely(res: Response): Promise<{ data: unknown; ok: bool
 // 0003_seed_dev_user.
 const DEV_USER_ID = "11111111-1111-1111-1111-111111111111";
 
+const DEFAULT_PLATFORMS: JobSourcePlatform[] = ["LINKEDIN", "INDEED", "HIRINGCAFE"];
+
 export default function JobsPage() {
   const [jobs, setJobs] = useState<JobCardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchNote, setSearchNote] = useState<string | null>(null);
   const [interestedJob, setInterestedJob] = useState<JobCardData | null>(null);
+
+  // Filter state lives here (not inside the topbar/sidebar components) so
+  // both can stay controlled and share one source of truth for the search
+  // request -- the sidebar sits in a different part of the page tree than
+  // the topbar, so it can't hold its own local state the way the old
+  // single-form version did.
+  const [keyword, setKeyword] = useState("");
+  const [location, setLocation] = useState("");
+  const [experienceLevel, setExperienceLevel] = useState<JobSearchFilters["experienceLevel"] | "">("");
+  const [workplaceType, setWorkplaceType] = useState<JobSearchFilters["workplaceType"] | "">("");
+  const [datePostedDays, setDatePostedDays] = useState(0);
+  const [platforms, setPlatforms] = useState<Set<JobSourcePlatform>>(new Set(DEFAULT_PLATFORMS));
+
+  function togglePlatform(platform: JobSourcePlatform) {
+    setPlatforms((prev) => {
+      const next = new Set(prev);
+      if (next.has(platform)) next.delete(platform);
+      else next.add(platform);
+      return next;
+    });
+  }
+
+  function resetFilters() {
+    setExperienceLevel("");
+    setWorkplaceType("");
+    setDatePostedDays(0);
+    setPlatforms(new Set(DEFAULT_PLATFORMS));
+  }
 
   const loadJobs = useCallback(async () => {
     setIsLoading(true);
@@ -56,14 +87,22 @@ export default function JobsPage() {
     loadJobs();
   }, [loadJobs]);
 
-  async function handleSearch(filters: JobSearchFilters, platforms: JobSourcePlatform[]) {
+  async function handleSearch() {
     setIsSearching(true);
     setSearchNote(null);
     try {
+      const filters: JobSearchFilters = {
+        keyword: keyword.trim(),
+        location: location.trim() || undefined,
+        experienceLevel: experienceLevel || undefined,
+        workplaceType: workplaceType || undefined,
+        datePostedDays: (datePostedDays || undefined) as JobSearchFilters["datePostedDays"],
+        limit: 25,
+      };
       const res = await fetch("/api/jobs/search", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-user-id": DEV_USER_ID },
-        body: JSON.stringify({ filters, platforms }),
+        body: JSON.stringify({ filters, platforms: Array.from(platforms) }),
       });
       const { data, ok } = await parseJsonSafely(res);
       if (!res.ok || !ok) {
@@ -120,7 +159,7 @@ export default function JobsPage() {
   );
 
   return (
-    <div className="flex flex-col gap-6 p-4">
+    <div className="flex flex-col gap-4 p-4 sm:p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Job Search</h1>
@@ -142,38 +181,67 @@ export default function JobsPage() {
         </div>
       </div>
 
-      <JobSearchForm onSearch={handleSearch} isSearching={isSearching} />
+      <JobSearchTopbar
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        location={location}
+        onLocationChange={setLocation}
+        onSubmit={handleSearch}
+        isSearching={isSearching}
+        disabled={platforms.size === 0}
+        disabledReason="Select at least one source in the filters panel"
+      />
 
       {searchNote && <p className="text-sm text-muted-foreground">{searchNote}</p>}
 
-      <div className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold text-foreground">
-            {undecidedJobs.length > 0 ? `${undecidedJobs.length} to review` : "Results"}
-          </h2>
-          {undecidedJobs.length > 0 && (
-            <p className="text-xs text-muted-foreground">
-              Already applied or further along? Check the <Link href="/dashboard" className="underline underline-offset-2">dashboard</Link>.
-            </p>
-          )}
-        </div>
-
-        {undecidedJobs.length === 0 && !isLoading ? (
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr]">
+        <aside className="lg:sticky lg:top-6 lg:h-fit">
           <Card>
-            <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
-              <SearchX className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
-              <p className="text-sm text-muted-foreground">
-                Nothing to review yet. Run a search above to find roles.
-              </p>
+            <CardContent className="pt-4">
+              <JobFiltersSidebar
+                platforms={platforms}
+                onTogglePlatform={togglePlatform}
+                experienceLevel={experienceLevel}
+                onExperienceLevelChange={setExperienceLevel}
+                workplaceType={workplaceType}
+                onWorkplaceTypeChange={setWorkplaceType}
+                datePostedDays={datePostedDays}
+                onDatePostedDaysChange={setDatePostedDays}
+                onReset={resetFilters}
+              />
             </CardContent>
           </Card>
-        ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {undecidedJobs.map((job) => (
-              <JobCard key={job.id} job={job} onStatusChange={handleStatusChange} onInterested={handleInterested} />
-            ))}
+        </aside>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-sm font-semibold text-foreground">
+              {undecidedJobs.length > 0 ? `${undecidedJobs.length} Jobs Found` : "Results"}
+            </h2>
+            {undecidedJobs.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Already applied or further along? Check the <Link href="/dashboard" className="underline underline-offset-2">dashboard</Link>.
+              </p>
+            )}
           </div>
-        )}
+
+          {undecidedJobs.length === 0 && !isLoading ? (
+            <Card>
+              <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
+                <SearchX className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+                <p className="text-sm text-muted-foreground">
+                  Nothing to review yet. Run a search above to find roles.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {undecidedJobs.map((job) => (
+                <JobCard key={job.id} job={job} onStatusChange={handleStatusChange} onInterested={handleInterested} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {interestedJob && (
